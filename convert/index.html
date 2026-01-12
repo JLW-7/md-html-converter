@@ -7,87 +7,298 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .gradient-bg {
+      background: #3b82f6;
+    }
+    
+    .card-shadow {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .input-focus {
+      transition: all 0.3s ease;
+    }
+    
+    .input-focus:focus {
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.3);
+    }
+    
+    .tab-active {
+      background-color: white;
+      color: #1e40af;
+    }
+    
+    .copy-success {
+      animation: fadeOut 2s forwards;
+    }
+    
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    
+    .pulse-animation {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .teal-glow {
+      box-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
+    }
+  </style>
 </head>
-<body class="bg-blue-500 text-white font-sans min-h-screen">
+<body class="gradient-bg text-white min-h-screen flex flex-col">
   <!-- Top Nav -->
-  <div class="absolute top-4 right-4">
-    <a href="/" class="bg-teal-300 text-blue-800 font-semibold px-4 py-2 rounded-2xl shadow hover:scale-105 transition">
-      ← Back
+  <div class="absolute top-4 left-4 z-10">
+    <a href="/" class="bg-teal-300 text-blue-800 font-semibold px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 hover:scale-105">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back</span>
     </a>
   </div>
 
   <!-- Main Container -->
-  <div class="max-w-6xl mx-auto mt-20 px-6">
+  <div class="max-w-6xl mx-auto mt-20 px-6 flex-grow">
     <!-- Title -->
-    <h1 class="text-4xl md:text-5xl font-bold text-center mb-12">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">
         <span class="text-teal-300">Marky</span> - Markdown <span class="text-teal-300">↔</span> HTML Converter
-    </h1>
+      </h1>
+      <p class="text-blue-100 max-w-2xl mx-auto text-lg">
+        Convert between Markdown and HTML formats instantly. Perfect for developers, writers, and content creators.
+      </p>
+    </div>
 
-    <div class="mb-10 flex justify-center gap-4 items-center">
-        <label for="convertDirection" class="block text-lg font-semibold mb-2 text-white">Convert from</label>
-        <select id="convertDirection" class="text-blue-800 text-base rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400">
+    <!-- Conversion Direction Selector -->
+    <div class="mb-10 flex justify-center">
+      <div class="glass-effect rounded-2xl p-2 flex items-center card-shadow">
+        <label for="convertDirection" class="block text-lg font-semibold mr-4 text-white">Convert from</label>
+        <select id="convertDirection" class="bg-white text-blue-800 text-base rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-300 w-64 input-focus">
           <option value="md-to-html">Markdown → HTML</option>
           <option value="html-to-md">HTML → Markdown</option>
         </select>
+      </div>
     </div>
 
     <!-- Converter UI -->
-    <div class="grid md:grid-cols-2 gap-8">
-      <!-- Markdown Input -->
-      <div class="flex flex-col bg-blue-400 p-6 rounded-2xl shadow-md">
-        <div class="flex justify-between items-center mb-2">
-          <label class="text-lg font-semibold text-teal-100">Input</label>
-          <div class="flex space-x-2 text-sm font-semibold text-blue-800 bg-teal-200 rounded-xl p-1">
-            <button id="showCode" class="px-3 py-1 rounded-xl bg-white">Code</button>
-            <button id="showPreview" class="px-3 py-1 rounded-xl hover:bg-white">Preview</button>
+    <div class="grid md:grid-cols-2 gap-8 mb-8">
+      <!-- Input Panel -->
+      <div class="flex flex-col glass-effect p-6 rounded-2xl card-shadow">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <label class="text-xl font-semibold text-white">Input</label>
+            <div id="inputType" class="text-teal-200 text-sm mt-1">Markdown</div>
+          </div>
+          <div class="flex space-x-1 text-sm font-semibold text-blue-800 bg-teal-200 rounded-xl p-1">
+            <button id="showCode" class="px-4 py-2 rounded-xl tab-active transition-all">
+              <i class="fas fa-code mr-1"></i>Code
+            </button>
+            <button id="showPreview" class="px-4 py-2 rounded-xl hover:bg-white/50 transition-all">
+              <i class="fas fa-eye mr-1"></i>Preview
+            </button>
           </div>
         </div>
         
-        <!-- Markdown Textarea -->
-        <textarea id="markdown" placeholder="Type or paste input here..." class="p-4 rounded-lg text-sm h-72 resize-none text-blue-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-300"></textarea>
+        <!-- Input Textarea -->
+        <textarea id="markdown" placeholder="Type or paste your Markdown here..." class="p-4 rounded-xl text-base h-80 resize-none text-blue-900 bg-white focus:outline-none input-focus"></textarea>
 
         <!-- Rendered Preview (Hidden by Default) -->
-        <div id="preview" class="p-4 rounded-lg text-sm h-72 overflow-auto text-blue-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-300 hidden"></div>
+        <div id="preview" class="p-4 rounded-xl text-base h-80 overflow-auto text-blue-900 bg-white hidden prose max-w-none"></div>
       </div>
 
-      <!-- HTML Output -->
-      <div class="flex flex-col bg-blue-400 p-6 rounded-2xl shadow-md">
-        <label for="html" class="text-lg font-semibold mb-2 text-teal-100 flex justify-between items-center">
-          Output
-          <!-- Copy Button -->
-          <button id="copyOutputBtn" class="text-sm text-teal-300 hover:text-teal-400 transition">Copy Code</button>
-        </label>
-        <textarea id="html" placeholder="Output code will appear here..." readonly class="p-4 rounded-lg text-sm h-72 resize-none text-blue-900 bg-white focus:outline-none focus:ring-2 focus:ring-teal-300"></textarea>
+      <!-- Output Panel -->
+      <div class="flex flex-col glass-effect p-6 rounded-2xl card-shadow">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <label class="text-xl font-semibold text-white">Output</label>
+            <div id="outputType" class="text-teal-200 text-sm mt-1">HTML</div>
+          </div>
+          <div class="flex items-center">
+            <span id="copySuccess" class="text-teal-300 text-sm mr-3 hidden copy-success">
+              <i class="fas fa-check mr-1"></i>Copied!
+            </span>
+            <button id="copyOutputBtn" class="text-blue-800 bg-teal-300 hover:bg-teal-200 px-4 py-2 rounded-xl transition-all flex items-center gap-2 hover:teal-glow">
+              <i class="fas fa-copy"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+        <textarea id="html" placeholder="Your converted code will appear here..." readonly class="p-4 rounded-xl text-base h-80 resize-none text-blue-900 bg-white focus:outline-none input-focus"></textarea>
       </div>
-
     </div>
 
-    <!-- Export buttons + Clear button -->
-    <div class="flex flex-wrap justify-center gap-6 mt-12">
-      <button class="bg-gradient-to-r from-blue-300 to-teal-300 text-blue-800 font-bold px-6 py-3 rounded-full hover:scale-105 transition shadow">
-        Download HTML file
+    <!-- Action buttons -->
+    <div class="flex flex-wrap justify-center gap-6 mt-8">
+      <button id="downloadHtml" class="bg-gradient-to-r from-blue-400 to-teal-300 text-blue-800 font-bold px-8 py-4 rounded-full hover:scale-105 transition-all shadow-lg flex items-center gap-2 pulse-animation">
+        <i class="fas fa-download"></i>
+        <span>Download HTML</span>
       </button>
-      <button class="bg-gradient-to-r from-teal-300 to-blue-300 text-blue-800 font-bold px-6 py-3 rounded-full hover:scale-105 transition shadow">
-        Download Markdown file
+      <button id="downloadMd" class="bg-gradient-to-r from-teal-300 to-blue-400 text-blue-800 font-bold px-8 py-4 rounded-full hover:scale-105 transition-all shadow-lg flex items-center gap-2">
+        <i class="fas fa-download"></i>
+        <span>Download Markdown</span>
       </button>
-      <button id="clearBtn" class="bg-white text-blue-800 border-2 border-blue-800 font-semibold px-6 py-3 rounded-full hover:bg-blue-100 transition">
-        Clear
+      <button id="clearBtn" class="bg-transparent text-white border-2 border-teal-300 font-semibold px-8 py-4 rounded-full hover:bg-teal-300/10 transition-all flex items-center gap-2">
+        <i class="fas fa-eraser"></i>
+        <span>Clear All</span>
       </button>
     </div>
-
   </div>
 
   <!-- Footer -->
-  <footer class="bg-teal-300 px-4 py-6 w-full mt-24">
-    <div class="text-center text-blue-500 px-4 max-w-7xl mx-auto">
-      <p>
-        Made with ❤️ by <a href="https://julyw.com" class="text-blue-800 font-semibold hover:underline">July Wu</a>. This project is 
-        <a href="https://github.com/JLW-7/convert-md---html" class="text-blue-800 font-semibold hover:underline">open source</a> if you find it helpful, give a ★ and feel free to make contributions!.
+  <footer class="bg-teal-300 px-4 py-8 w-full mt-16">
+    <div class="text-center text-blue-800 px-4 max-w-7xl mx-auto">
+      <p class="flex flex-col md:flex-row justify-center items-center gap-2">
+        <span>Made with <i class="fas fa-heart text-red-500 mx-1"></i> by <a href="https://julyw.com" class="text-blue-800 font-semibold hover:underline">July Wu</a>.</span>
+        <span>This project is <a href="https://github.com/JLW-7/convert-md---html" class="text-blue-800 font-semibold hover:underline">open source</a> - give it a <i class="fas fa-star text-yellow-500 mx-1"></i> and contribute!</span>
       </p>
     </div>
   </footer>
 
-  <!-- External JavaScript File -->
-  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM Elements
+      const convertDirection = document.getElementById('convertDirection');
+      const markdownInput = document.getElementById('markdown');
+      const htmlOutput = document.getElementById('html');
+      const previewDiv = document.getElementById('preview');
+      const showCodeBtn = document.getElementById('showCode');
+      const showPreviewBtn = document.getElementById('showPreview');
+      const copyOutputBtn = document.getElementById('copyOutputBtn');
+      const copySuccess = document.getElementById('copySuccess');
+      const clearBtn = document.getElementById('clearBtn');
+      const downloadHtmlBtn = document.getElementById('downloadHtml');
+      const downloadMdBtn = document.getElementById('downloadMd');
+      const inputType = document.getElementById('inputType');
+      const outputType = document.getElementById('outputType');
+      
+      // Initialize
+      updateConversionLabels();
+      
+      // Event Listeners
+      convertDirection.addEventListener('change', function() {
+        updateConversionLabels();
+        convertContent();
+      });
+      
+      markdownInput.addEventListener('input', convertContent);
+      
+      showCodeBtn.addEventListener('click', function() {
+        showCodeBtn.classList.add('tab-active');
+        showPreviewBtn.classList.remove('tab-active');
+        markdownInput.classList.remove('hidden');
+        previewDiv.classList.add('hidden');
+      });
+      
+      showPreviewBtn.addEventListener('click', function() {
+        showPreviewBtn.classList.add('tab-active');
+        showCodeBtn.classList.remove('tab-active');
+        markdownInput.classList.add('hidden');
+        previewDiv.classList.remove('hidden');
+        updatePreview();
+      });
+      
+      copyOutputBtn.addEventListener('click', function() {
+        if (htmlOutput.value.trim() !== '') {
+          htmlOutput.select();
+          document.execCommand('copy');
+          copySuccess.classList.remove('hidden');
+          setTimeout(() => {
+            copySuccess.classList.add('hidden');
+          }, 2000);
+        }
+      });
+      
+      clearBtn.addEventListener('click', function() {
+        markdownInput.value = '';
+        htmlOutput.value = '';
+        previewDiv.innerHTML = '';
+      });
+      
+      downloadHtmlBtn.addEventListener('click', function() {
+        if (htmlOutput.value.trim() !== '') {
+          const blob = new Blob([htmlOutput.value], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'converted.html';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      downloadMdBtn.addEventListener('click', function() {
+        if (markdownInput.value.trim() !== '') {
+          const blob = new Blob([markdownInput.value], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'converted.md';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      // Functions
+      function updateConversionLabels() {
+        if (convertDirection.value === 'md-to-html') {
+          inputType.textContent = 'Markdown';
+          outputType.textContent = 'HTML';
+          markdownInput.placeholder = 'Type or paste your Markdown here...';
+        } else {
+          inputType.textContent = 'HTML';
+          outputType.textContent = 'Markdown';
+          markdownInput.placeholder = 'Type or paste your HTML here...';
+        }
+      }
+      
+      function convertContent() {
+        if (convertDirection.value === 'md-to-html') {
+          // Markdown to HTML conversion
+          htmlOutput.value = marked.parse(markdownInput.value);
+        } else {
+          // HTML to Markdown conversion
+          const turndownService = new TurndownService();
+          htmlOutput.value = turndownService.turndown(markdownInput.value);
+        }
+        
+        // Update preview if it's visible
+        if (!previewDiv.classList.contains('hidden')) {
+          updatePreview();
+        }
+      }
+      
+      function updatePreview() {
+        if (convertDirection.value === 'md-to-html') {
+          previewDiv.innerHTML = marked.parse(markdownInput.value);
+        } else {
+          // For HTML to Markdown, we'll show the HTML preview
+          previewDiv.innerHTML = markdownInput.value;
+        }
+      }
+    });
+  </script>
 </body>
 </html>
