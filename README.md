@@ -3,7 +3,7 @@
 
 ## About
 
-Marky is a lightweight two way converter between HTML and Markdown for developers, bloggers, professionals, or just someone who happens to need a quick converter.
+Markdown ↔ HTML is a lightweight two way converter between HTML and Markdown for developers, bloggers, professionals, or just someone who happens to need a quick converter.
 
 
 ## Features
@@ -23,11 +23,7 @@ Marky is a lightweight two way converter between HTML and Markdown for developer
 
 ## Get Started
 
-1. **Clone** this repo:
-   ```bash
-   git clone https://github.com/JLW-7/marky-markdown-html-converter.git
-   ```
-2. Open the `index.html` file in your browser
+Simply click [here](https://julyw.com/md-html-converter/) to open the tool in your browser and start converting!
 
 
 ## Contributions
