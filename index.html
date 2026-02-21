@@ -4,17 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown ↔ HTML Converter</title>
+  <meta name="description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
+
+  <!-- Open Graph / Social Preview -->
+  <meta property="og:title" content="Markdown ↔ HTML Converter" />
+  <meta property="og:description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jlw-7.github.io/md-html-converter/" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Inter (Next.js default) -->
+  <!-- Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Prism -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 
   <style>
     body {
@@ -28,10 +35,10 @@
     }
 
     .feature-card {
-      background: rgba(255,255,255,0.03);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.08);
-      transition: all 0.3s ease;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgb(82 82 82);
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .code-block {
@@ -57,7 +64,8 @@
            class="bg-white text-black text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition">
           Try It
         </a>
-        <a href="https://github.com/"
+        <a href="https://github.com/JLW-7/md-html-converter"
+           target="_blank"
            class="border border-neutral-700 text-neutral-300 text-sm font-medium px-4 py-2 rounded-full hover:bg-neutral-900 transition">
           Star on GitHub
         </a>
@@ -80,39 +88,42 @@
            class="bg-white text-black px-6 py-3 rounded-full text-sm font-medium hover:opacity-90 transition">
           Open Converter
         </a>
-        <a href="https://github.com/"
+        <a href="https://github.com/JLW-7/md-html-converter"
+           target="_blank"
            class="border border-neutral-700 text-neutral-300 px-6 py-3 rounded-full text-sm font-medium hover:bg-neutral-900 transition">
           View Source
         </a>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-        <div class="p-6 rounded-xl border border-neutral-600 bg-white bg-opacity-10">
-            <h3 class="text-lg font-semibold mb-2">Two-way Conversion</h3>
-            <p class="text-sm text-neutral-200">
+        <div class="feature-card">
+          <h3 class="text-lg font-semibold mb-2">Two-way Conversion</h3>
+          <p class="text-sm text-neutral-200">
             Convert between .md and .html real-time as you type.
-            </p>
+          </p>
         </div>
 
-        <div class="p-6 rounded-xl border border-neutral-600 bg-white bg-opacity-10">
-            <h3 class="text-lg font-semibold mb-2">Live Preview</h3>
-            <p class="text-sm text-neutral-200">
-              Preview how your input code looks live.
-            </p>
-        </div>    
-        <div class="p-6 rounded-xl border border-neutral-600 bg-white bg-opacity-10">
-            <h3 class="text-lg font-semibold mb-2">Copy & Download</h3>
-            <p class="text-sm text-neutral-200">
-            Copy results instantly or download files.
-            </p>
+        <div class="feature-card">
+          <h3 class="text-lg font-semibold mb-2">Live Preview</h3>
+          <p class="text-sm text-neutral-200">
+            Preview how your input code looks live.
+          </p>
         </div>
+
+        <div class="feature-card">
+          <h3 class="text-lg font-semibold mb-2">Copy & Download</h3>
+          <p class="text-sm text-neutral-200">
+            Copy results instantly or download files.
+          </p>
+        </div>
+      </div>
     </div>
   </main>
 
   <!-- FOOTER -->
   <footer class="border-t border-neutral-900 py-6 text-center text-sm text-neutral-500">
     <p>
-        Made with ❤️ by <a href="https://julyw.com" target="_blank" class="font-medium text-white hover:underline">July Wu</a>. This project is open source on <a href="https://github.com/JLW-7" target="_blank" class="font-medium text-white  hover:underline">GitHub</a>.
+      Made with ❤️ by <a href="https://julyw.com" target="_blank" class="font-medium text-white hover:underline">July Wu</a>. This project is open source on <a href="https://github.com/JLW-7/md-html-converter" target="_blank" class="font-medium text-white hover:underline">GitHub</a>.
     </p>
   </footer>
 </body>

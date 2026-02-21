@@ -19,17 +19,21 @@ Markdown ↔ HTML is a lightweight two way converter between HTML and Markdown f
 
 - 💾 **Download Output**: Save your work as a `.md` or `.html` file in one click.
 
+- 👁️ **Live Preview**: Toggle between code and rendered preview for your input.
+
+- ⌨️ **Tab Indentation**: Press Tab in the editor to insert spaces naturally.
+
 - 🛠️ **Perfect for**: Developers, bloggers, students, and anyone working with Markdown or HTML!
 
 
 ## Get Started
 
-Simply click [here](https://julyw.com/md-html-converter/) to open the tool in your browser and start converting!
+Simply click [here](https://jlw-7.github.io/md-html-converter/) to open the tool in your browser and start converting!
 
 
 ## Contributions
 
-Contributions are welcome to make this tool better. Feel free to open issues or pull requests.
+Contributions are welcome to make this tool better. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, or open a pull request on [GitHub](https://github.com/JLW-7/md-html-converter).
 
 
 ## Tech Stack
@@ -38,9 +42,11 @@ Contributions are welcome to make this tool better. Feel free to open issues or 
 
 - **TailwindCSS** for styling
 
-- **Marked.js** for mardown to html conversion
+- **Marked.js** for markdown to HTML conversion
 
-- **Turndown.js** for html to markdown conversion
+- **Turndown.js** for HTML to Markdown conversion
+
+- **DOMPurify** for XSS sanitization in the live preview
 
 
 ## License
@@ -48,6 +54,6 @@ Contributions are welcome to make this tool better. Feel free to open issues or 
 This project is licensed under the [MIT License](LICENSE).
 
 
-Made with ❤️ by [July Wu](https://github.com/JLW-7)
+Made with ❤️ by [July Wu](https://github.com/JLW-7) · [View on GitHub](https://github.com/JLW-7/md-html-converter)
 
 ### 🌟 Please give this project a star if you found it helpful!

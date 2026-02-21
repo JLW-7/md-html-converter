@@ -4,22 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown ↔ HTML Converter</title>
+  <meta name="description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
+
+  <!-- Open Graph / Social Preview -->
+  <meta property="og:title" content="Markdown ↔ HTML Converter" />
+  <meta property="og:description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jlw-7.github.io/md-html-converter/convert/" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 
   <!-- Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind (with typography plugin for prose list rendering) -->
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
   <!-- Markdown / HTML -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.min.js"></script>
 
-  <!-- Prism -->
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <!-- DOMPurify for XSS sanitization -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
   <style>
     body {
@@ -36,15 +45,17 @@
 </head>
 
 <body class="bg-neutral-950 text-neutral-100 min-h-screen flex flex-col">
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur border-b border-neutral-800 px-6 py-4 mb-36">
+  <!-- NAV — note: no mb-36 on a fixed element (has no effect) -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur border-b border-neutral-800 px-6 py-4">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <span class="text-sm font-medium text-neutral-200">Markdown ↔ HTML</span>
       <div class="flex gap-3">
-        <a href="/md-html-converter/index.html"
+        <a href="../index.html"
            class="bg-white text-black text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition">
           ← Home
         </a>
-        <a href="https://github.com/"
+        <a href="https://github.com/JLW-7/md-html-converter"
+           target="_blank"
            class="border border-neutral-700 text-neutral-300 text-sm font-medium px-4 py-2 rounded-full hover:bg-neutral-900 transition">
           Star on GitHub
         </a>
@@ -55,15 +66,14 @@
   <!-- MAIN -->
   <main class="flex-1 pt-24 px-6 py-8 text-center">
 
-    <div class="flex justify-start gap-3 mb-6 max-w-6xl mx-auto">
-      <p>Convert From:</p>
+    <div class="flex justify-start gap-3 mb-6 max-w-6xl mx-auto items-center">
+      <p class="text-sm text-neutral-400">Convert From:</p>
       <select id="convertDirection"
         class="bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1 text-sm focus:outline-none">
         <option value="md-to-html">Markdown → HTML</option>
         <option value="html-to-md">HTML → Markdown</option>
       </select>
     </div>
-
 
     <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -82,13 +92,17 @@
 
         <textarea
           id="markdown"
-          class="code-font bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] resize-none focus:outline-none focus:border-neutral-600" placeholder="# Hello World&#10;&#10;- Type or paste your Markdown code here... &#10;&#10;- See the converted HTML on the right!"
-          ></textarea>
+          class="code-font bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] resize-none focus:outline-none focus:border-neutral-600"
+          placeholder="# Hello World&#10;&#10;- Type or paste your Markdown code here... &#10;&#10;- See the converted HTML on the right!"
+        ></textarea>
 
         <div
           id="preview"
-          class="code-font bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] overflow-auto hidden prose max-w-none">
+          class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] overflow-auto hidden prose prose-invert max-w-none text-left text-sm">
         </div>
+
+        <!-- Input char/line count -->
+        <p id="inputStats" class="text-xs text-neutral-600 mt-1 text-right">0 chars · 0 lines</p>
       </div>
 
       <!-- OUTPUT -->
@@ -98,7 +112,7 @@
 
           <div class="flex items-center gap-3">
             <span id="copySuccess"
-              class="text-xs text-green-400 hidden">Copied</span>
+              class="text-xs text-green-400 hidden">Copied!</span>
             <button id="copyOutputBtn"
               class="text-xs px-3 py-2 rounded-md bg-neutral-900 border border-neutral-800 hover:bg-neutral-800">
               Copy
@@ -111,17 +125,20 @@
           readonly
           class="code-font bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] resize-none focus:outline-none">
         </textarea>
+
+        <!-- Output char/line count -->
+        <p id="outputStats" class="text-xs text-neutral-600 mt-1 text-right">0 chars · 0 lines</p>
       </div>
 
     </div>
 
     <!-- ACTIONS -->
     <div class="flex justify-center gap-4 mt-8">
-      <button id="downloadHtml"
+      <button id="downloadOutput"
         class="bg-white text-black px-5 py-2 rounded-full text-sm font-medium hover:opacity-90 transition">
         Download HTML
       </button>
-      <button id="downloadMd"
+      <button id="downloadInput"
         class="bg-neutral-900 border border-neutral-800 px-5 py-2 rounded-full text-sm hover:bg-neutral-800 transition">
         Download Markdown
       </button>
@@ -132,9 +149,9 @@
     </div>
 
     <!-- FOOTER -->
-    <footer class="py-6 mt-10 text-center text-sm text-neutral-500 border-t border-neutral-800 items-center justify-center ">
+    <footer class="py-6 mt-10 text-center text-sm text-neutral-500 border-t border-neutral-800">
       <p>
-        Made with ❤️ by <a href="https://julyw.com" target="_blank" class="font-medium text-white hover:underline">July Wu</a>. This tool is open source on <a href="https://github.com/JLW-7" target="_blank" class="font-medium text-white  hover:underline">GitHub</a>.
+        Made with ❤️ by <a href="https://julyw.com" target="_blank" class="font-medium text-white hover:underline">July Wu</a>. This tool is open source on <a href="https://github.com/JLW-7/md-html-converter" target="_blank" class="font-medium text-white hover:underline">GitHub</a>.
       </p>
     </footer>
   </main>
@@ -142,122 +159,155 @@
   <!-- SCRIPT -->
   <script>
     const convertDirection = document.getElementById('convertDirection');
-    const markdownInput = document.getElementById('markdown');
-    const htmlOutput = document.getElementById('html');
-    const previewDiv = document.getElementById('preview');
-    const showCodeBtn = document.getElementById('showCode');
-    const showPreviewBtn = document.getElementById('showPreview');
-    const copyOutputBtn = document.getElementById('copyOutputBtn');
-    const copySuccess = document.getElementById('copySuccess');
-    const clearBtn = document.getElementById('clearBtn');
-    const downloadHtmlBtn = document.getElementById('downloadHtml');
-    const downloadMdBtn = document.getElementById('downloadMd');
-    const inputType = document.getElementById('inputType');
-    const outputType = document.getElementById('outputType');
+    const markdownInput    = document.getElementById('markdown');
+    const htmlOutput       = document.getElementById('html');
+    const previewDiv       = document.getElementById('preview');
+    const showCodeBtn      = document.getElementById('showCode');
+    const showPreviewBtn   = document.getElementById('showPreview');
+    const copyOutputBtn    = document.getElementById('copyOutputBtn');
+    const copySuccess      = document.getElementById('copySuccess');
+    const clearBtn         = document.getElementById('clearBtn');
+    const downloadOutputBtn = document.getElementById('downloadOutput');
+    const downloadInputBtn  = document.getElementById('downloadInput');
+    const inputType        = document.getElementById('inputType');
+    const outputType       = document.getElementById('outputType');
+    const inputStats       = document.getElementById('inputStats');
+    const outputStats      = document.getElementById('outputStats');
 
     function updateLabels() {
-      if (convertDirection.value === 'md-to-html') {
-        inputType.textContent = 'Markdown';
-        outputType.textContent = 'HTML';
-        markdownInput.placeholder = "# Hello World\n\n" +
-        "- Type or paste your Markdown code here...\n" +
-        "- See the converted HTML on the right!";
-      } else {
-        inputType.textContent = 'HTML';
-        outputType.textContent = 'Markdown';
-        markdownInput.placeholder =
-        "<h1>Hello World</h1>\n\n" +
-        "<ul>\n" +
-        "  <li>Type or paste your HTML code here...</li>\n" +
-        "  <li>See the converted Markdown on the right!</li>\n" +
-        "</ul>";
+      const isMdToHtml = convertDirection.value === 'md-to-html';
 
-      }
+      inputType.textContent  = isMdToHtml ? 'Markdown' : 'HTML';
+      outputType.textContent = isMdToHtml ? 'HTML' : 'Markdown';
+
+      downloadOutputBtn.textContent = isMdToHtml ? 'Download HTML'     : 'Download Markdown';
+      downloadInputBtn.textContent  = isMdToHtml ? 'Download Markdown' : 'Download HTML';
+
+      markdownInput.placeholder = isMdToHtml
+        ? "# Hello World\n\n- Type or paste your Markdown code here...\n- See the converted HTML on the right!"
+        : "<h1>Hello World</h1>\n\n<ul>\n  <li>Type or paste your HTML code here...</li>\n  <li>See the converted Markdown on the right!</li>\n</ul>";
+    }
+
+    function updateStats() {
+      const inputVal  = markdownInput.value;
+      const outputVal = htmlOutput.value;
+
+      const inputLines  = inputVal  === '' ? 0 : inputVal.split('\n').length;
+      const outputLines = outputVal === '' ? 0 : outputVal.split('\n').length;
+
+      inputStats.textContent  = `${inputVal.length} chars · ${inputLines} lines`;
+      outputStats.textContent = `${outputVal.length} chars · ${outputLines} lines`;
     }
 
     function convert() {
-      if (convertDirection.value === 'md-to-html') {
-        htmlOutput.value = marked.parse(markdownInput.value);
+      const isMdToHtml = convertDirection.value === 'md-to-html';
+      let result;
+
+      if (isMdToHtml) {
+        result = marked.parse(markdownInput.value);
       } else {
         const td = new TurndownService();
-        htmlOutput.value = td.turndown(markdownInput.value);
+        result = td.turndown(markdownInput.value);
       }
+
+      htmlOutput.value = result;
 
       if (!previewDiv.classList.contains('hidden')) {
-        previewDiv.innerHTML =
-          convertDirection.value === 'md-to-html'
-            ? marked.parse(markdownInput.value)
-            : markdownInput.value;
+        // Sanitize HTML before injecting into the DOM to prevent XSS
+        previewDiv.innerHTML = DOMPurify.sanitize(
+          isMdToHtml ? result : markdownInput.value
+        );
       }
+
+      updateStats();
     }
 
-    convertDirection.onchange = () => {
+    convertDirection.addEventListener('change', () => {
       updateLabels();
       convert();
-    };
+    });
 
-    markdownInput.oninput = convert;
+    markdownInput.addEventListener('input', convert);
 
-    showCodeBtn.onclick = () => {
+    showCodeBtn.addEventListener('click', () => {
       showCodeBtn.classList.add('bg-neutral-800');
+      showCodeBtn.classList.remove('text-neutral-400');
       showPreviewBtn.classList.remove('bg-neutral-800');
+      showPreviewBtn.classList.add('text-neutral-400');
       markdownInput.classList.remove('hidden');
       previewDiv.classList.add('hidden');
-    };
+    });
 
-    showPreviewBtn.onclick = () => {
+    showPreviewBtn.addEventListener('click', () => {
       showPreviewBtn.classList.add('bg-neutral-800');
+      showPreviewBtn.classList.remove('text-neutral-400');
       showCodeBtn.classList.remove('bg-neutral-800');
+      showCodeBtn.classList.add('text-neutral-400');
       markdownInput.classList.add('hidden');
       previewDiv.classList.remove('hidden');
       convert();
-    };
+    });
 
-    copyOutputBtn.onclick = () => {
-      navigator.clipboard.writeText(htmlOutput.value);
-      copySuccess.classList.remove('hidden');
-      setTimeout(() => copySuccess.classList.add('hidden'), 2000);
-    };
+    copyOutputBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(htmlOutput.value).then(() => {
+        copySuccess.classList.remove('hidden');
+        setTimeout(() => copySuccess.classList.add('hidden'), 2000);
+      }).catch(() => {
+        alert('Failed to copy to clipboard. Please copy the text manually.');
+      });
+    });
 
-    clearBtn.onclick = () => {
+    clearBtn.addEventListener('click', () => {
       markdownInput.value = '';
-      htmlOutput.value = '';
+      htmlOutput.value    = '';
       previewDiv.innerHTML = '';
-    };
+      updateStats();
+    });
 
-    downloadHtmlBtn.onclick = () => {
-      const blob = new Blob([htmlOutput.value], { type: 'text/html' });
+    // Download the OUTPUT field (direction-aware)
+    downloadOutputBtn.addEventListener('click', () => {
+      const isMdToHtml = convertDirection.value === 'md-to-html';
+      const content  = htmlOutput.value;
+      const mimeType = isMdToHtml ? 'text/html' : 'text/markdown';
+      const filename = isMdToHtml ? 'converted.html' : 'converted.md';
+      triggerDownload(content, mimeType, filename);
+    });
+
+    // Download the INPUT field (direction-aware)
+    downloadInputBtn.addEventListener('click', () => {
+      const isMdToHtml = convertDirection.value === 'md-to-html';
+      const content  = markdownInput.value;
+      const mimeType = isMdToHtml ? 'text/markdown' : 'text/html';
+      const filename = isMdToHtml ? 'source.md' : 'source.html';
+      triggerDownload(content, mimeType, filename);
+    });
+
+    function triggerDownload(content, mimeType, filename) {
+      const blob = new Blob([content], { type: mimeType });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'converted.html';
+      a.download = filename;
       a.click();
-    };
+      URL.revokeObjectURL(a.href);
+    }
 
-    downloadMdBtn.onclick = () => {
-      const blob = new Blob([markdownInput.value], { type: 'text/markdown' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'converted.md';
-      a.click();
-    };
+    // Tab key indentation in the input textarea
+    markdownInput.addEventListener('keydown', e => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = markdownInput.selectionStart;
+        const end   = markdownInput.selectionEnd;
+        markdownInput.value =
+          markdownInput.value.substring(0, start) +
+          '  ' +
+          markdownInput.value.substring(end);
+        markdownInput.selectionStart = markdownInput.selectionEnd = start + 2;
+      }
+    });
 
-    // // TAB indentation
-    // document.querySelectorAll('textarea').forEach(textarea => {
-    //   textarea.addEventListener('keydown', e => {
-    //     if (e.key === 'Tab') {
-    //       e.preventDefault();
-    //       const start = textarea.selectionStart;
-    //       const end = textarea.selectionEnd;
-    //       textarea.value =
-    //         textarea.value.substring(0, start) +
-    //         '  ' +
-    //         textarea.value.substring(end);
-    //       textarea.selectionStart = textarea.selectionEnd = start + 2;
-    //     }
-    //   });
-    // });
-
+    // Initialise
     updateLabels();
+    updateStats();
   </script>
 </body>
 </html>
