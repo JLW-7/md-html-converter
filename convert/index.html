@@ -4,48 +4,312 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown ↔ HTML Converter</title>
+  <meta name="description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
+  <meta property="og:title" content="Markdown ↔ HTML Converter" />
+  <meta property="og:description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jlw-7.github.io/md-html-converter/convert/" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
 
-  <!-- Inter -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind typography plugin (for prose list/heading rendering in preview) -->
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
-  <!-- Markdown / HTML -->
+  <!-- Converters + Sanitizer -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/turndown/dist/turndown.min.js"></script>
-
-  <!-- Prism -->
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 
   <style>
-    body {
-      font-family: Inter, system-ui, sans-serif;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #09090f;
+      --surface:   rgba(255,255,255,0.04);
+      --surface2:  rgba(255,255,255,0.025);
+      --border:    rgba(255,255,255,0.08);
+      --border-hl: rgba(139,92,246,0.5);
+      --text:      #f4f4f5;
+      --muted:     #71717a;
+      --muted2:    #52525b;
+      --accent1:   #a78bfa;
+      --accent2:   #818cf8;
+      --accent3:   #60a5fa;
+      --green:     #4ade80;
+      --red-muted: rgba(239,68,68,0.15);
+      --red-text:  #f87171;
     }
 
-    .code-font {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.9rem;
-      line-height: 1.6;
-      tab-size: 2;
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
     }
+
+    /* ── Backgrounds ── */
+    #star-canvas {
+      position: fixed; inset: 0;
+      z-index: 0; pointer-events: none;
+    }
+    .orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(120px); pointer-events: none; z-index: 0;
+    }
+    .orb-1 {
+      width: 600px; height: 400px;
+      top: -160px; left: 50%; transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(109,40,217,0.13) 0%, transparent 70%);
+    }
+    .orb-2 {
+      width: 320px; height: 320px;
+      bottom: 0; right: -80px;
+      background: radial-gradient(ellipse, rgba(59,130,246,0.07) 0%, transparent 70%);
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 50; height: 60px;
+      display: flex; align-items: center;
+      padding: 0 1.5rem;
+      background: rgba(9,9,15,0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1280px; width: 100%; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 0.875rem; font-weight: 600; color: var(--text);
+    }
+    .nav-logo span {
+      background: linear-gradient(135deg, var(--accent1), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links { display: flex; gap: 0.5rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-family: inherit; font-size: 0.8125rem; font-weight: 500;
+      padding: 0.45rem 1rem; border-radius: 999px;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #6366f1);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(124,58,237,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 26px rgba(124,58,237,0.5); }
+    .btn-glass {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: #d4d4d8;
+    }
+    .btn-glass:hover { background: rgba(255,255,255,0.09); transform: translateY(-1px); }
+    .btn-danger {
+      background: var(--red-muted);
+      border: 1px solid rgba(239,68,68,0.2);
+      color: var(--red-text);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.22); transform: translateY(-1px); }
+    .btn-lg { padding: 0.6rem 1.4rem; font-size: 0.875rem; }
+
+    /* ── Layout ── */
+    main {
+      flex: 1; position: relative; z-index: 1;
+      padding: 80px 1.25rem 2rem;
+      max-width: 1280px; width: 100%; margin: 0 auto;
+    }
+    footer { position: relative; z-index: 1; }
+
+    /* ── Toolbar row ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .toolbar-label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+
+    /* Custom select */
+    .custom-select {
+      appearance: none;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.625rem;
+      padding: 0.4rem 2rem 0.4rem 0.75rem;
+      cursor: pointer;
+      outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      transition: border-color 0.2s;
+    }
+    .custom-select:hover, .custom-select:focus { border-color: rgba(139,92,246,0.4); }
+    .custom-select option { background: #1a1a2e; }
+
+    /* ── Editor grid ── */
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 768px) { .editor-grid { grid-template-columns: 1fr; } }
+
+    /* ── Panel ── */
+    .panel { display: flex; flex-direction: column; }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.625rem; min-height: 32px;
+    }
+    .panel-label {
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .panel-controls { display: flex; align-items: center; gap: 0.625rem; }
+
+    /* Code/Preview toggle pill */
+    .toggle-pill {
+      display: flex;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 2px;
+      gap: 2px;
+    }
+    .toggle-pill button {
+      font-family: inherit; font-size: 0.72rem; font-weight: 500;
+      padding: 0.25rem 0.7rem; border-radius: 5px;
+      border: none; cursor: pointer; color: var(--muted);
+      background: transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+    .toggle-pill button.active {
+      background: rgba(139,92,246,0.18);
+      color: var(--accent1);
+    }
+
+    /* Copy button */
+    .copy-btn {
+      font-family: inherit; font-size: 0.72rem; font-weight: 500;
+      padding: 0.28rem 0.75rem; border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .copy-btn:hover { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.3); color: var(--accent1); }
+
+    .copy-success {
+      font-size: 0.72rem; color: var(--green);
+      display: none;
+    }
+
+    /* ── Textarea & preview ── */
+    .editor-area {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.8125rem;
+      line-height: 1.65;
+      tab-size: 2;
+      height: 460px;
+      resize: none;
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 0.875rem;
+      padding: 1rem 1.125rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .editor-area:focus {
+      border-color: rgba(139,92,246,0.45);
+      box-shadow: 0 0 0 3px rgba(139,92,246,0.08), inset 0 0 20px rgba(139,92,246,0.02);
+    }
+    .editor-area::placeholder { color: var(--muted2); }
+    .editor-area[readonly] { cursor: default; color: #a1a1aa; }
+
+    /* Preview div (prose from Tailwind typography) */
+    #preview {
+      height: 460px;
+      overflow-y: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 0.875rem;
+      padding: 1rem 1.125rem;
+      display: none;
+    }
+
+    /* Stats line */
+    .stats {
+      font-size: 0.7rem;
+      color: var(--muted2);
+      text-align: right;
+      margin-top: 0.375rem;
+    }
+
+    /* ── Actions ── */
+    .actions {
+      display: flex; justify-content: center;
+      gap: 0.625rem; flex-wrap: wrap;
+      margin-top: 1.75rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 2rem;
+    }
+    footer a { color: #e4e4e7; text-decoration: none; font-weight: 500; }
+    footer a:hover { text-decoration: underline; }
+
+    /* Thin scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
   </style>
 </head>
 
-<body class="bg-neutral-950 text-neutral-100 min-h-screen flex flex-col">
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur border-b border-neutral-800 px-6 py-4 mb-36">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <span class="text-sm font-medium text-neutral-200">Markdown ↔ HTML</span>
-      <div class="flex gap-3">
-        <a href="/md-html-converter/index.html"
-           class="bg-white text-black text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition">
-          ← Home
+<body>
+  <!-- Backgrounds -->
+  <canvas id="star-canvas"></canvas>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <div class="nav-logo">Marky <span>↔</span></div>
+      <div class="nav-links">
+        <a href="../index.html" class="btn btn-primary">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Home
         </a>
-        <a href="https://github.com/"
-           class="border border-neutral-700 text-neutral-300 text-sm font-medium px-4 py-2 rounded-full hover:bg-neutral-900 transition">
+        <a href="https://github.com/JLW-7/md-html-converter" target="_blank" rel="noopener" class="btn btn-glass">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z"/></svg>
           Star on GitHub
         </a>
       </div>
@@ -53,211 +317,222 @@
   </nav>
 
   <!-- MAIN -->
-  <main class="flex-1 pt-24 px-6 py-8 text-center">
-
-    <div class="flex justify-start gap-3 mb-6 max-w-6xl mx-auto">
-      <p>Convert From:</p>
-      <select id="convertDirection"
-        class="bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1 text-sm focus:outline-none">
+  <main>
+    <!-- Direction selector -->
+    <div class="toolbar">
+      <span class="toolbar-label">Convert</span>
+      <select id="convertDirection" class="custom-select">
         <option value="md-to-html">Markdown → HTML</option>
         <option value="html-to-md">HTML → Markdown</option>
       </select>
     </div>
 
-
-    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Editor columns -->
+    <div class="editor-grid">
 
       <!-- INPUT -->
-      <div class="flex flex-col">
-        <div class="flex items-center justify-between mb-2">
-          <label id="inputType" class="text-sm text-neutral-400">Markdown</label>
-
-          <div class="flex bg-neutral-900 border border-neutral-800 rounded-lg p-1 text-xs">
-            <button id="showCode"
-              class="px-3 py-1 rounded-md bg-neutral-800">Code</button>
-            <button id="showPreview"
-              class="px-3 py-1 rounded-md text-neutral-400">Preview</button>
+      <div class="panel">
+        <div class="panel-header">
+          <span id="inputType" class="panel-label">Markdown</span>
+          <div class="panel-controls">
+            <div class="toggle-pill">
+              <button id="showCode" class="active">Code</button>
+              <button id="showPreview">Preview</button>
+            </div>
           </div>
         </div>
 
         <textarea
           id="markdown"
-          class="code-font bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] resize-none focus:outline-none focus:border-neutral-600" placeholder="# Hello World&#10;&#10;- Type or paste your Markdown code here... &#10;&#10;- See the converted HTML on the right!"
-          ></textarea>
+          class="editor-area"
+          placeholder="# Hello World&#10;&#10;- Type or paste your Markdown here…&#10;- See the converted HTML on the right!"
+        ></textarea>
 
-        <div
-          id="preview"
-          class="code-font bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] overflow-auto hidden prose max-w-none">
-        </div>
+        <div id="preview" class="prose prose-invert max-w-none text-sm"></div>
+
+        <p id="inputStats" class="stats">0 chars · 0 lines</p>
       </div>
 
       <!-- OUTPUT -->
-      <div class="flex flex-col">
-        <div class="flex items-center justify-between mb-2">
-          <label id="outputType" class="text-sm text-neutral-400">HTML</label>
-
-          <div class="flex items-center gap-3">
-            <span id="copySuccess"
-              class="text-xs text-green-400 hidden">Copied</span>
-            <button id="copyOutputBtn"
-              class="text-xs px-3 py-2 rounded-md bg-neutral-900 border border-neutral-800 hover:bg-neutral-800">
-              Copy
-            </button>
+      <div class="panel">
+        <div class="panel-header">
+          <span id="outputType" class="panel-label">HTML</span>
+          <div class="panel-controls">
+            <span id="copySuccess" class="copy-success">✓ Copied!</span>
+            <button id="copyOutputBtn" class="copy-btn">Copy</button>
           </div>
         </div>
 
-        <textarea
-          id="html"
-          readonly
-          class="code-font bg-neutral-900 border border-neutral-800 rounded-xl p-4 h-[450px] resize-none focus:outline-none">
-        </textarea>
+        <textarea id="html" readonly class="editor-area"></textarea>
+
+        <p id="outputStats" class="stats">0 chars · 0 lines</p>
       </div>
 
     </div>
 
     <!-- ACTIONS -->
-    <div class="flex justify-center gap-4 mt-8">
-      <button id="downloadHtml"
-        class="bg-white text-black px-5 py-2 rounded-full text-sm font-medium hover:opacity-90 transition">
-        Download HTML
-      </button>
-      <button id="downloadMd"
-        class="bg-neutral-900 border border-neutral-800 px-5 py-2 rounded-full text-sm hover:bg-neutral-800 transition">
-        Download Markdown
-      </button>
-      <button id="clearBtn"
-        class="bg-neutral-900 border border-neutral-800 px-5 py-2 rounded-full text-sm text-red-400 hover:bg-red-500/10 transition">
-        Clear All
-      </button>
+    <div class="actions">
+      <button id="downloadOutput" class="btn btn-primary btn-lg">Download HTML</button>
+      <button id="downloadInput"  class="btn btn-glass btn-lg">Download Markdown</button>
+      <button id="clearBtn"       class="btn btn-danger btn-lg">Clear All</button>
     </div>
 
     <!-- FOOTER -->
-    <footer class="py-6 mt-10 text-center text-sm text-neutral-500 border-t border-neutral-800 items-center justify-center ">
-      <p>
-        Made with ❤️ by <a href="https://julyw.com" target="_blank" class="font-medium text-white hover:underline">July Wu</a>. This tool is open source on <a href="https://github.com/JLW-7" target="_blank" class="font-medium text-white  hover:underline">GitHub</a>.
-      </p>
+    <footer>
+      Made with ♥ by <a href="https://julyw.com" target="_blank" rel="noopener">July Wu</a>.
+      Open source on <a href="https://github.com/JLW-7/md-html-converter" target="_blank" rel="noopener">GitHub</a>.
     </footer>
   </main>
 
-  <!-- SCRIPT -->
+  <!-- Star field -->
   <script>
-    const convertDirection = document.getElementById('convertDirection');
-    const markdownInput = document.getElementById('markdown');
-    const htmlOutput = document.getElementById('html');
-    const previewDiv = document.getElementById('preview');
-    const showCodeBtn = document.getElementById('showCode');
-    const showPreviewBtn = document.getElementById('showPreview');
-    const copyOutputBtn = document.getElementById('copyOutputBtn');
-    const copySuccess = document.getElementById('copySuccess');
-    const clearBtn = document.getElementById('clearBtn');
-    const downloadHtmlBtn = document.getElementById('downloadHtml');
-    const downloadMdBtn = document.getElementById('downloadMd');
-    const inputType = document.getElementById('inputType');
-    const outputType = document.getElementById('outputType');
+    (function () {
+      const canvas = document.getElementById('star-canvas');
+      const ctx    = canvas.getContext('2d');
+      let stars    = [];
+      function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      function initStars(n) {
+        stars = [];
+        for (let i = 0; i < n; i++) {
+          stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 0.9 + 0.1,
+            alpha: Math.random(),
+            speed: (Math.random() * 0.003 + 0.001) * (Math.random() < 0.5 ? 1 : -1),
+          });
+        }
+      }
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const s of stars) {
+          s.alpha += s.speed;
+          if (s.alpha > 0.8 || s.alpha < 0.04) s.speed = -s.speed;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${s.alpha.toFixed(3)})`;
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+      window.addEventListener('resize', () => { resize(); initStars(130); });
+      resize(); initStars(130); draw();
+    })();
+  </script>
+
+  <!-- Converter logic -->
+  <script>
+    const convertDirection  = document.getElementById('convertDirection');
+    const markdownInput     = document.getElementById('markdown');
+    const htmlOutput        = document.getElementById('html');
+    const previewDiv        = document.getElementById('preview');
+    const showCodeBtn       = document.getElementById('showCode');
+    const showPreviewBtn    = document.getElementById('showPreview');
+    const copyOutputBtn     = document.getElementById('copyOutputBtn');
+    const copySuccess       = document.getElementById('copySuccess');
+    const clearBtn          = document.getElementById('clearBtn');
+    const downloadOutputBtn = document.getElementById('downloadOutput');
+    const downloadInputBtn  = document.getElementById('downloadInput');
+    const inputType         = document.getElementById('inputType');
+    const outputType        = document.getElementById('outputType');
+    const inputStats        = document.getElementById('inputStats');
+    const outputStats       = document.getElementById('outputStats');
 
     function updateLabels() {
-      if (convertDirection.value === 'md-to-html') {
-        inputType.textContent = 'Markdown';
-        outputType.textContent = 'HTML';
-        markdownInput.placeholder = "# Hello World\n\n" +
-        "- Type or paste your Markdown code here...\n" +
-        "- See the converted HTML on the right!";
-      } else {
-        inputType.textContent = 'HTML';
-        outputType.textContent = 'Markdown';
-        markdownInput.placeholder =
-        "<h1>Hello World</h1>\n\n" +
-        "<ul>\n" +
-        "  <li>Type or paste your HTML code here...</li>\n" +
-        "  <li>See the converted Markdown on the right!</li>\n" +
-        "</ul>";
+      const isMdToHtml = convertDirection.value === 'md-to-html';
+      inputType.textContent  = isMdToHtml ? 'Markdown' : 'HTML';
+      outputType.textContent = isMdToHtml ? 'HTML'     : 'Markdown';
+      downloadOutputBtn.textContent = isMdToHtml ? 'Download HTML'     : 'Download Markdown';
+      downloadInputBtn.textContent  = isMdToHtml ? 'Download Markdown' : 'Download HTML';
+      markdownInput.placeholder = isMdToHtml
+        ? "# Hello World\n\n- Type or paste your Markdown here…\n- See the converted HTML on the right!"
+        : "<h1>Hello World</h1>\n\n<ul>\n  <li>Type or paste your HTML here…</li>\n  <li>See the converted Markdown on the right!</li>\n</ul>";
+    }
 
-      }
+    function updateStats() {
+      const iv = markdownInput.value, ov = htmlOutput.value;
+      inputStats.textContent  = `${iv.length} chars · ${iv === '' ? 0 : iv.split('\n').length} lines`;
+      outputStats.textContent = `${ov.length} chars · ${ov === '' ? 0 : ov.split('\n').length} lines`;
     }
 
     function convert() {
-      if (convertDirection.value === 'md-to-html') {
-        htmlOutput.value = marked.parse(markdownInput.value);
+      const isMdToHtml = convertDirection.value === 'md-to-html';
+      let result;
+      if (isMdToHtml) {
+        result = marked.parse(markdownInput.value);
       } else {
-        const td = new TurndownService();
-        htmlOutput.value = td.turndown(markdownInput.value);
+        result = new TurndownService().turndown(markdownInput.value);
       }
-
-      if (!previewDiv.classList.contains('hidden')) {
-        previewDiv.innerHTML =
-          convertDirection.value === 'md-to-html'
-            ? marked.parse(markdownInput.value)
-            : markdownInput.value;
+      htmlOutput.value = result;
+      if (!previewDiv.classList.contains('hidden') && previewDiv.style.display !== 'none') {
+        previewDiv.innerHTML = DOMPurify.sanitize(isMdToHtml ? result : markdownInput.value);
       }
+      updateStats();
     }
 
-    convertDirection.onchange = () => {
-      updateLabels();
+    convertDirection.addEventListener('change', () => { updateLabels(); convert(); });
+    markdownInput.addEventListener('input', convert);
+
+    showCodeBtn.addEventListener('click', () => {
+      showCodeBtn.classList.add('active');
+      showPreviewBtn.classList.remove('active');
+      markdownInput.style.display = '';
+      previewDiv.style.display    = 'none';
+    });
+
+    showPreviewBtn.addEventListener('click', () => {
+      showPreviewBtn.classList.add('active');
+      showCodeBtn.classList.remove('active');
+      markdownInput.style.display = 'none';
+      previewDiv.style.display    = 'block';
       convert();
-    };
+    });
 
-    markdownInput.oninput = convert;
+    copyOutputBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(htmlOutput.value).then(() => {
+        copySuccess.style.display = 'inline';
+        setTimeout(() => { copySuccess.style.display = 'none'; }, 2000);
+      }).catch(() => alert('Failed to copy. Please copy manually.'));
+    });
 
-    showCodeBtn.onclick = () => {
-      showCodeBtn.classList.add('bg-neutral-800');
-      showPreviewBtn.classList.remove('bg-neutral-800');
-      markdownInput.classList.remove('hidden');
-      previewDiv.classList.add('hidden');
-    };
-
-    showPreviewBtn.onclick = () => {
-      showPreviewBtn.classList.add('bg-neutral-800');
-      showCodeBtn.classList.remove('bg-neutral-800');
-      markdownInput.classList.add('hidden');
-      previewDiv.classList.remove('hidden');
-      convert();
-    };
-
-    copyOutputBtn.onclick = () => {
-      navigator.clipboard.writeText(htmlOutput.value);
-      copySuccess.classList.remove('hidden');
-      setTimeout(() => copySuccess.classList.add('hidden'), 2000);
-    };
-
-    clearBtn.onclick = () => {
-      markdownInput.value = '';
-      htmlOutput.value = '';
+    clearBtn.addEventListener('click', () => {
+      markdownInput.value  = '';
+      htmlOutput.value     = '';
       previewDiv.innerHTML = '';
-    };
+      updateStats();
+    });
 
-    downloadHtmlBtn.onclick = () => {
-      const blob = new Blob([htmlOutput.value], { type: 'text/html' });
+    downloadOutputBtn.addEventListener('click', () => {
+      const isMdToHtml = convertDirection.value === 'md-to-html';
+      triggerDownload(htmlOutput.value, isMdToHtml ? 'text/html' : 'text/markdown', isMdToHtml ? 'converted.html' : 'converted.md');
+    });
+
+    downloadInputBtn.addEventListener('click', () => {
+      const isMdToHtml = convertDirection.value === 'md-to-html';
+      triggerDownload(markdownInput.value, isMdToHtml ? 'text/markdown' : 'text/html', isMdToHtml ? 'source.md' : 'source.html');
+    });
+
+    function triggerDownload(content, mimeType, filename) {
+      const blob = new Blob([content], { type: mimeType });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'converted.html';
+      a.download = filename;
       a.click();
-    };
+      URL.revokeObjectURL(a.href);
+    }
 
-    downloadMdBtn.onclick = () => {
-      const blob = new Blob([markdownInput.value], { type: 'text/markdown' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'converted.md';
-      a.click();
-    };
-
-    // // TAB indentation
-    // document.querySelectorAll('textarea').forEach(textarea => {
-    //   textarea.addEventListener('keydown', e => {
-    //     if (e.key === 'Tab') {
-    //       e.preventDefault();
-    //       const start = textarea.selectionStart;
-    //       const end = textarea.selectionEnd;
-    //       textarea.value =
-    //         textarea.value.substring(0, start) +
-    //         '  ' +
-    //         textarea.value.substring(end);
-    //       textarea.selectionStart = textarea.selectionEnd = start + 2;
-    //     }
-    //   });
-    // });
+    markdownInput.addEventListener('keydown', e => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = markdownInput.selectionStart;
+        const end   = markdownInput.selectionEnd;
+        markdownInput.value = markdownInput.value.substring(0, start) + '  ' + markdownInput.value.substring(end);
+        markdownInput.selectionStart = markdownInput.selectionEnd = start + 2;
+      }
+    });
 
     updateLabels();
+    updateStats();
   </script>
 </body>
 </html>

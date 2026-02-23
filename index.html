@@ -4,61 +4,325 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown ↔ HTML Converter</title>
+  <meta name="description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Open Graph / Social Preview -->
+  <meta property="og:title" content="Markdown ↔ HTML Converter" />
+  <meta property="og:description" content="A clean, fast online converter between Markdown and HTML. Convert in real-time, preview live, copy or download your output instantly." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jlw-7.github.io/md-html-converter/" />
 
-  <!-- Inter (Next.js default) -->
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>" />
+
+  <!-- Inter + JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Prism -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #09090f;
+      --surface:   rgba(255,255,255,0.035);
+      --border:    rgba(255,255,255,0.08);
+      --border-hl: rgba(139,92,246,0.45);
+      --text:      #f4f4f5;
+      --muted:     #71717a;
+      --accent1:   #a78bfa;
+      --accent2:   #818cf8;
+      --accent3:   #60a5fa;
     }
 
-    .hero-pattern {
-      background:
-        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.04), transparent 55%),
-        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.02), transparent 55%);
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── Star canvas ── */
+    #star-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Nebula orbs ── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 {
+      width: 700px; height: 500px;
+      top: -180px; left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(109,40,217,0.18) 0%, transparent 70%);
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      bottom: 60px; right: -100px;
+      background: radial-gradient(ellipse, rgba(59,130,246,0.10) 0%, transparent 70%);
+    }
+
+    /* ── Dot-grid overlay ── */
+    .dot-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black 30%, transparent 100%);
+    }
+
+    /* ── Stacking ── */
+    nav, main, footer { position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      background: rgba(9,9,15,0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+    .nav-logo span {
+      background: linear-gradient(135deg, var(--accent1), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links { display: flex; gap: 0.625rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.5rem 1.125rem;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(124,58,237,0.35), 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px rgba(124,58,237,0.55), 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .btn-glass {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: #d4d4d8;
+      backdrop-filter: blur(8px);
+    }
+    .btn-glass:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-1px);
+    }
+    .btn-lg { padding: 0.75rem 1.75rem; font-size: 0.9375rem; }
+
+    /* ── Hero ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 1.5rem 3rem;
+    }
+    .hero {
+      max-width: 780px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent1);
+      background: rgba(167,139,250,0.1);
+      border: 1px solid rgba(167,139,250,0.2);
+      padding: 0.3rem 0.875rem;
+      border-radius: 999px;
+      margin-bottom: 1.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.25rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--accent1) 0%, var(--accent2) 50%, var(--accent3) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 1.0625rem;
+      color: #a1a1aa;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      font-weight: 400;
+    }
+
+    .hero-ctas {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 4.5rem;
+    }
+
+    /* ── Feature cards ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      text-align: left;
+    }
+    @media (max-width: 640px) {
+      .features { grid-template-columns: 1fr; }
     }
 
     .feature-card {
-      background: rgba(255,255,255,0.03);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.08);
-      transition: all 0.3s ease;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .feature-card:hover {
+      border-color: var(--border-hl);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 40px rgba(109,40,217,0.1), 0 0 0 1px rgba(139,92,246,0.08);
     }
 
-    .code-block {
-      background: #0a0a0a;
+    .card-icon {
+      width: 36px; height: 36px;
       border-radius: 10px;
-      padding: 16px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.9rem;
-      color: #e5e7eb;
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      color: var(--accent1);
     }
+    .card-icon svg { width: 18px; height: 18px; }
+
+    .feature-card h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    .feature-card p {
+      font-size: 0.8125rem;
+      color: #a1a1aa;
+      line-height: 1.65;
+    }
+
+    /* ── Footer ── */
+    footer {
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    footer a {
+      color: #e4e4e7;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Fade-in animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.7s ease both; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.22s; }
+    .delay-3 { animation-delay: 0.34s; }
+    .delay-4 { animation-delay: 0.46s; }
   </style>
 </head>
 
-<body class="bg-neutral-950 text-neutral-100 hero-pattern scroll-smooth min-h-screen flex flex-col">
+<body>
+
+  <!-- Star field -->
+  <canvas id="star-canvas"></canvas>
+
+  <!-- Nebula glow orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- Dot grid -->
+  <div class="dot-grid"></div>
 
   <!-- NAV -->
-  <nav class="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur border-b border-neutral-800 px-6 py-4">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <span class="text-sm font-medium text-neutral-200">Markdown ↔ HTML</span>
-      <div class="flex gap-3">
-        <a href="./convert/index.html"
-           class="bg-white text-black text-sm font-medium px-4 py-2 rounded-full hover:opacity-90 transition">
-          Try It
-        </a>
-        <a href="https://github.com/"
-           class="border border-neutral-700 text-neutral-300 text-sm font-medium px-4 py-2 rounded-full hover:bg-neutral-900 transition">
+  <nav>
+    <div class="nav-inner">
+      <div class="nav-logo">Marky <span>↔</span></div>
+      <div class="nav-links">
+        <a href="./convert/index.html" class="btn btn-primary">Try It Free</a>
+        <a href="https://github.com/JLW-7/md-html-converter" target="_blank" rel="noopener" class="btn btn-glass">
+          <!-- GitHub icon -->
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z"/></svg>
           Star on GitHub
         </a>
       </div>
@@ -66,54 +330,122 @@
   </nav>
 
   <!-- HERO -->
-  <main class="flex-1 flex items-center justify-center px-6 pt-20 pb-12">
-    <div class="max-w-3xl text-center">
-      <h1 class="text-4xl md:text-5xl font-semibold tracking-tight mb-6">
-        Markdown ↔ HTML
+  <main>
+    <div class="hero">
+      <div class="badge fade-up">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="5"/></svg>
+        Open Source · No Sign-up · Free Forever
+      </div>
+
+      <h1 class="fade-up delay-1">
+        Convert Markdown<br>
+        <span class="gradient-text">&amp; HTML Instantly</span>
       </h1>
-      <p class="text-neutral-400 text-base md:text-lg mb-10">
-        A clean, fast online converter between Markdown and HTML.
+
+      <p class="hero-sub fade-up delay-2">
+        A clean, blazing-fast two-way converter. Type, paste, preview, and export — all in your browser, no server required.
       </p>
 
-      <div class="flex justify-center gap-4 mb-14">
-        <a href="./convert/index.html"
-           class="bg-white text-black px-6 py-3 rounded-full text-sm font-medium hover:opacity-90 transition">
+      <div class="hero-ctas fade-up delay-3">
+        <a href="./convert/index.html" class="btn btn-primary btn-lg">
           Open Converter
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </a>
-        <a href="https://github.com/"
-           class="border border-neutral-700 text-neutral-300 px-6 py-3 rounded-full text-sm font-medium hover:bg-neutral-900 transition">
+        <a href="https://github.com/JLW-7/md-html-converter" target="_blank" rel="noopener" class="btn btn-glass btn-lg">
           View Source
         </a>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-        <div class="p-6 rounded-xl border border-neutral-600 bg-white bg-opacity-10">
-            <h3 class="text-lg font-semibold mb-2">Two-way Conversion</h3>
-            <p class="text-sm text-neutral-200">
-            Convert between .md and .html real-time as you type.
-            </p>
+      <!-- Feature cards -->
+      <div class="features fade-up delay-4">
+        <div class="feature-card">
+          <div class="card-icon">
+            <!-- Arrows icon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/>
+            </svg>
+          </div>
+          <h3>Two-way Conversion</h3>
+          <p>Switch between Markdown → HTML and HTML → Markdown with a single click.</p>
         </div>
 
-        <div class="p-6 rounded-xl border border-neutral-600 bg-white bg-opacity-10">
-            <h3 class="text-lg font-semibold mb-2">Live Preview</h3>
-            <p class="text-sm text-neutral-200">
-              Preview how your input code looks live.
-            </p>
-        </div>    
-        <div class="p-6 rounded-xl border border-neutral-600 bg-white bg-opacity-10">
-            <h3 class="text-lg font-semibold mb-2">Copy & Download</h3>
-            <p class="text-sm text-neutral-200">
-            Copy results instantly or download files.
-            </p>
+        <div class="feature-card">
+          <div class="card-icon">
+            <!-- Eye icon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <h3>Live Preview</h3>
+          <p>Toggle to a rich rendered preview and see exactly how your content will look.</p>
         </div>
+
+        <div class="feature-card">
+          <div class="card-icon">
+            <!-- Download icon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3>Copy &amp; Download</h3>
+          <p>Copy output to clipboard instantly or download as a proper .html or .md file.</p>
+        </div>
+      </div>
     </div>
   </main>
 
   <!-- FOOTER -->
-  <footer class="border-t border-neutral-900 py-6 text-center text-sm text-neutral-500">
-    <p>
-        Made with ❤️ by <a href="https://julyw.com" target="_blank" class="font-medium text-white hover:underline">July Wu</a>. This project is open source on <a href="https://github.com/JLW-7" target="_blank" class="font-medium text-white  hover:underline">GitHub</a>.
-    </p>
+  <footer>
+    Made with ♥ by <a href="https://julyw.com" target="_blank" rel="noopener">July Wu</a>.
+    Open source on <a href="https://github.com/JLW-7/md-html-converter" target="_blank" rel="noopener">GitHub</a>.
   </footer>
+
+  <!-- Star field script -->
+  <script>
+    (function () {
+      const canvas = document.getElementById('star-canvas');
+      const ctx    = canvas.getContext('2d');
+      let stars    = [];
+
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function initStars(n) {
+        stars = [];
+        for (let i = 0; i < n; i++) {
+          stars.push({
+            x:     Math.random() * canvas.width,
+            y:     Math.random() * canvas.height,
+            r:     Math.random() * 1.1 + 0.15,
+            alpha: Math.random(),
+            speed: (Math.random() * 0.004 + 0.001) * (Math.random() < 0.5 ? 1 : -1),
+          });
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const s of stars) {
+          s.alpha += s.speed;
+          if (s.alpha > 0.85 || s.alpha < 0.05) s.speed = -s.speed;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${s.alpha.toFixed(3)})`;
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', () => { resize(); initStars(180); });
+      resize();
+      initStars(180);
+      draw();
+    })();
+  </script>
 </body>
 </html>
